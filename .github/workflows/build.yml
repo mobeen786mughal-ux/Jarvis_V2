@@ -10,65 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Code checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. ZIP extract karo (agar hai to)
       - name: Extract ZIP if present
         run: |
-          echo "🔍 Searching for zip file..."
           ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" -type f | head -n 1)
-          
           if [ -n "$ZIP_FILE" ]; then
-            echo "📦 Found $ZIP_FILE, extracting..."
             unzip -o "$ZIP_FILE" -d extracted/
-            
             if [ -f "extracted/main.py" ]; then
               mv extracted/* . 2>/dev/null || true
-            else
-              SUBDIR=$(find extracted -maxdepth 2 -name "main.py" -type f | head -n 1 | xargs dirname)
-              if [ -n "$SUBDIR" ]; then
-                mv "$SUBDIR"/* . 2>/dev/null || true
-              fi
             fi
             rm -rf extracted
-          else
-            echo "✅ No zip found. Assuming files are already in root."
           fi
           ls -la
 
-      # Java abhi bhi zaroori hai Android SDK ke liye
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Python 3.11
+      # 3. Python setup
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install system dependencies
+      # 4. Dependencies install (pyproject se)
+      - name: Install Python dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsqlite3-dev portaudio19-dev libasound2-dev libffi-dev libssl-dev zip unzip
-
-      - name: Create requirements and Install packages
-        run: |
-          cat << 'EOF' > requirements.txt
-          flet==0.24.1
-          groq==0.11.0
-          SpeechRecognition==3.10.4
-          pyttsx3==2.98
-          gTTS==2.5.1
-          pygame==2.6.1
-          python-dotenv==1.0.1
-          Pillow
-          EOF
-
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install flet==0.24.1 groq==0.11.0 SpeechRecognition==3.10.4 pyttsx3==2.98 gTTS==2.5.1 pygame==2.6.1 python-dotenv==1.0.1 Pillow
 
+      # 5. Icons setup (logo.png se)
       - name: Setup Icons
         run: |
           if [ ! -d "assets" ]; then mkdir -p assets; fi
@@ -78,20 +49,20 @@ jobs:
           python -c "from PIL import Image; img = Image.open('assets/logo.png').convert('RGBA'); img = img.resize((1024, 1024), Image.LANCZOS); img.save('assets/logo.png')"
           cp assets/logo.png assets/icon.png
 
-      # YAHAN FIX HAI: --setup flag add kiya hai
+      # 6. APK Build (Official Flet Action)
       - name: Build APK
-        run: |
-          echo "🔨 Flutter aur Android SDK setup kar raha hoon..."
-          flet build apk --setup \
-            --project "jarvis_v2" \
-            --org "com.dina.jarvis" \
-            --product "JARVIS V2" \
-            --build-version "2.0.0" \
-            --verbose
+        id: build
+        uses: flet-dev/flet-build-action@v1
+        with:
+          target: 'apk'
+          build-version: '2.0.0'
+          build-number: '1'
 
+      # 7. APK Upload
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-V2-APK
-          path: build/apk/*.apk
+          path: ${{ steps.build.outputs.archive-path }}
+          archive: false
           if-no-files-found: error
