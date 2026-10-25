@@ -1,0 +1,24 @@
+[project]
+name = "jarvis_v2"
+version = "2.0.0"
+description = "JARVIS V2 - Dina Wala"
+requires-python = ">=3.10"
+dependencies = [
+    "flet==0.24.1",
+    "groq==0.11.0",
+    "SpeechRecognition==3.10.4",
+    "pyttsx3==2.98",
+    "gTTS==2.5.1",
+    "pygame==2.6.1",
+    "python-dotenv==1.0.1",
+    "Pillow",
+]
+
+[tool.flet]
+org = "com.dina.jarvis"
+product = "JARVIS V2"
+build_number = 1
+build_version = "2.0.0"
+
+[tool.flet.app]
+path = "."
