@@ -13,7 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. ZIP Extract karo
       - name: Extract ZIP if present
         run: |
           echo "🔍 Searching for zip file..."
@@ -32,29 +31,28 @@ jobs:
               fi
             fi
             rm -rf extracted
+          else
+            echo "✅ No zip found. Assuming files are already in root."
           fi
           ls -la
 
-      # 2. Java 17 Setup (Flet/Android ke liye zaroori)
+      # Java abhi bhi zaroori hai Android SDK ke liye
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Python Setup
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # 4. System Dependencies Install karo
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsqlite3-dev portaudio19-dev libasound2-dev libffi-dev libssl-dev zip unzip
 
-      # 5. Requirements aur Python Packages install karo
       - name: Create requirements and Install packages
         run: |
           cat << 'EOF' > requirements.txt
@@ -71,7 +69,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 6. Icons Setup
       - name: Setup Icons
         run: |
           if [ ! -d "assets" ]; then mkdir -p assets; fi
@@ -81,18 +78,17 @@ jobs:
           python -c "from PIL import Image; img = Image.open('assets/logo.png').convert('RGBA'); img = img.resize((1024, 1024), Image.LANCZOS); img.save('assets/logo.png')"
           cp assets/logo.png assets/icon.png
 
-      # 7. Build Command (Flutter fix ke sath)
+      # YAHAN FIX HAI: --setup flag add kiya hai
       - name: Build APK
         run: |
-          export FLUTTER_ROOT=$(which flutter) # Safety line
-          flet build apk \
+          echo "🔨 Flutter aur Android SDK setup kar raha hoon..."
+          flet build apk --setup \
             --project "jarvis_v2" \
             --org "com.dina.jarvis" \
             --product "JARVIS V2" \
             --build-version "2.0.0" \
             --verbose
 
-      # 8. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
