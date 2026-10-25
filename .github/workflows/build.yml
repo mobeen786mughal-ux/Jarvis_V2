@@ -22,7 +22,6 @@ jobs:
             echo "📦 Found $ZIP_FILE, extracting..."
             unzip -o "$ZIP_FILE" -d extracted/
             
-            # Move extracted files to root (if they are in a subfolder)
             if [ -f "extracted/main.py" ]; then
               mv extracted/* . 2>/dev/null || true
             else
@@ -57,7 +56,6 @@ jobs:
 
       - name: Create requirements.txt and Install packages
         run: |
-          # Khud requirements.txt bana raha hoon
           cat << 'EOF' > requirements.txt
           flet==0.24.1
           groq==0.11.0
@@ -74,34 +72,18 @@ jobs:
 
       - name: Setup Icons
         run: |
-          # Check karo assets folder aur logo
           if [ ! -d "assets" ]; then
             mkdir -p assets
           fi
           
           if [ ! -f "assets/logo.png" ]; then
             echo "⚠️ logo.png not found, creating default..."
-            python -c "
-from PIL import Image, ImageDraw
-img = Image.new('RGBA', (1024, 1024), (10, 14, 26, 255))
-d = ImageDraw.Draw(img)
-d.ellipse([112, 112, 912, 912], fill='#0a0e1a', outline='#00d4ff', width=16)
-d.ellipse([320, 400, 460, 540], fill='#00d4ff')
-d.ellipse([564, 400, 704, 540], fill='#00d4ff')
-d.rectangle([400, 680, 624, 720], fill='#00d4ff')
-d.line([512, 112, 512, 40], fill='#00d4ff', width=12)
-d.ellipse([492, 12, 532, 52], fill='#00d4ff')
-img.save('assets/logo.png')
-"
+            python -c "from PIL import Image, ImageDraw; img = Image.new('RGBA', (1024, 1024), (10, 14, 26, 255)); d = ImageDraw.Draw(img); d.ellipse([112, 112, 912, 912], fill='#0a0e1a', outline='#00d4ff', width=16); d.ellipse([320, 400, 460, 540], fill='#00d4ff'); d.ellipse([564, 400, 704, 540], fill='#00d4ff'); d.rectangle([400, 680, 624, 720], fill='#00d4ff'); d.line([512, 112, 512, 40], fill='#00d4ff', width=12); d.ellipse([492, 12, 532, 52], fill='#00d4ff'); img.save('assets/logo.png')"
           fi
           
-          # 1024x1024 resize (Flet standard)
-          python -c "
-from PIL import Image
-img = Image.open('assets/logo.png').convert('RGBA')
-img = img.resize((1024, 1024), Image.LANCZOS)
-img.save('assets/logo.png')
-"
+          echo "Resizing icon..."
+          python -c "from PIL import Image; img = Image.open('assets/logo.png').convert('RGBA'); img = img.resize((1024, 1024), Image.LANCZOS); img.save('assets/logo.png')"
+          
           cp assets/logo.png assets/icon.png
           ls -la assets/
 
